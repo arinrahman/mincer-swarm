@@ -1,0 +1,72 @@
+﻿version: "3.9"
+services:
+ server1:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netA]
+ server2:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netA]
+ client1:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netA]
+ client2:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netA]
+ client3:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netA]
+ client4:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netA]
+ server3:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netB]
+ client5:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netB]
+ client6:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netB]
+ aggregator:
+   image: localhost:5000/mincer:latest
+   command: ["bash","-lc","sleep infinity"]
+   cap_add: ["NET_ADMIN"]
+   networks: [netAgg, netA, netB]
+networks:
+ netA:
+   driver: overlay
+   attachable: true
+   ipam:
+     config:
+       - subnet: 10.80.0.0/24
+ netB:
+   driver: overlay
+   attachable: true
+   ipam:
+     config:
+       - subnet: 10.81.0.0/24
+ netAgg:
+   driver: overlay
+   attachable: true
+   ipam:
+     config:
+       - subnet: 10.82.0.0/24
+ 
