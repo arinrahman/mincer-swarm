@@ -1,0 +1,153 @@
+# Dockerfile.server2
+FROM ovishpc/ldms-dev:latest
+
+# --- Metasploit / rbenv setup (single RUN block, commands preserved exactly) ---
+USER root
+WORKDIR /root
+RUN apt-get update
+RUN apt-get upgrade -y 
+RUN apt-get install -y build-essential git curl pkg-config autoconf bison \
+     libssl-dev libreadline-dev zlib1g-dev libyaml-dev libffi-dev \
+     libgdbm-dev libncurses5-dev libpq-dev libsqlite3-dev libpcap-dev \
+     libxml2-dev libxslt1-dev libsqlite3-dev libpcap0.8-dev \
+     gnupg2 ca-certificates 
+RUN useradd -m -s /bin/bash msf || true 
+RUN chown -R msf:msf /opt/metasploit-framework || true
+RUN mkdir -p /opt/metasploit-framework
+RUN chown -R msf:msf /opt/metasploit-framework
+RUN if [ ! -d /opt/metasploit-framework/.git ]; then \
+     sudo -u msf -H git clone https://github.com/rapid7/metasploit-framework.git /opt/metasploit-framework && \
+     chown -R msf:msf /opt/metasploit-framework; \
+   fi && \
+   cat /opt/metasploit-framework/.ruby-version || echo ".ruby-version missing"
+# --- create msf user if missing (adjust shell/home if needed) ---
+RUN id -u msf >/dev/null 2>&1 || useradd -m -s /bin/bash msf
+# --- create an inline rbenv setup script and run it as msf (no external file) ---
+RUN cat > /tmp/rbenv_setup.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+RBENV_DIR="$HOME/.rbenv"
+RBENV_PLUGINS_DIR="$RBENV_DIR/plugins"
+RUBY_VERSION_FILE="/opt/metasploit-framework/.ruby-version"
+DEFAULT_RUBY="3.3.8"
+echo "[rbenv_setup] starting as $(whoami), HOME=$HOME"
+# install rbenv if missing
+if [ ! -d "$RBENV_DIR" ]; then
+ echo "[rbenv_setup] cloning rbenv..."
+ git clone https://github.com/rbenv/rbenv.git "$RBENV_DIR"
+ if [ -d "$RBENV_DIR/src" ]; then
+   (cd "$RBENV_DIR" && src/configure && make -C src) || true
+ fi
+ grep -qxF 'export PATH="$HOME/.rbenv/bin:$PATH"' ~/.bashrc 2>/dev/null || \
+   printf '\nexport PATH="$HOME/.rbenv/bin:$PATH"\n' >> ~/.bashrc
+ grep -qxF 'eval "$(rbenv init -)"' ~/.bashrc 2>/dev/null || \
+   printf 'eval "$(rbenv init -)"\n' >> ~/.bashrc
+fi
+# install ruby-build plugin if missing
+if [ ! -d "$RBENV_PLUGINS_DIR/ruby-build" ]; then
+ echo "[rbenv_setup] cloning ruby-build..."
+ mkdir -p "$RBENV_PLUGINS_DIR"
+ git clone https://github.com/rbenv/ruby-build.git "$RBENV_PLUGINS_DIR/ruby-build"
+fi
+export PATH="$RBENV_DIR/bin:$PATH"
+eval "$(rbenv init - || true)"
+if [ -f "$RUBY_VERSION_FILE" ]; then
+ REQUIRED="$(cat "$RUBY_VERSION_FILE" 2>/dev/null || echo "$DEFAULT_RUBY")"
+else
+ REQUIRED="$DEFAULT_RUBY"
+fi
+echo "[rbenv_setup] requested ruby: $REQUIRED"
+# optionally limit parallel make if builds run out of RAM
+# export MAKEFLAGS="-j1"
+echo "[rbenv_setup] installing ruby $REQUIRED (idempotent)..."
+rbenv install -s "$REQUIRED"
+rbenv global "$REQUIRED"
+rbenv rehash
+ruby -v || true
+gem install bundler --no-document || true
+echo "[rbenv_setup] done (ruby $(rbenv version --bare))"
+EOF
+# make it executable and owned by msf
+RUN chmod +x /tmp/rbenv_setup.sh && chown msf:msf /tmp/rbenv_setup.sh
+# run as msf user so rbenv installs into msf's home
+USER msf
+WORKDIR /home/msf
+RUN /tmp/rbenv_setup.sh || true
+# switch back to root
+USER root
+WORKDIR /
+
+RUN rm -rf /opt/metasploit-framework/vendor/bundle.gemspec.lock || true
+RUN chown -R msf:msf /opt/metasploit-framework/vendor || true
+RUN chown -R msf:msf /opt/metasploit-framework
+RUN ls -ld /opt/metasploit-framework
+RUN chown -R msf:msf /opt/metasploit-framework || true
+# Ensure the msf user exists (idempotent)
+
+# ensure msf exists (idempotent)
+RUN id -u msf >/dev/null 2>&1 || useradd -m -s /bin/bash msf
+# one script that installs rbenv if missing, then installs Ruby, Bundler, and runs bundle
+RUN cat > /tmp/msf_rbenv_and_bundle.sh <<'SCRIPT'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "[msf_setup] running as: $(whoami), HOME=$HOME"
+RBENV_DIR="$HOME/.rbenv"
+RBENV_PLUGINS_DIR="$RBENV_DIR/plugins"
+RUBY_BUILD_DIR="$RBENV_PLUGINS_DIR/ruby-build"
+RUBY_VERSION_FILE="/opt/metasploit-framework/.ruby-version"
+DEFAULT_RUBY="3.3.8"
+# ---- Bootstrap rbenv & ruby-build if missing ----
+if [ ! -x "$RBENV_DIR/bin/rbenv" ]; then
+ echo "[msf_setup] installing rbenv..."
+ git clone https://github.com/rbenv/rbenv.git "$RBENV_DIR"
+ if [ -d "$RBENV_DIR/src" ]; then
+   (cd "$RBENV_DIR" && src/configure && make -C src) || true
+ fi
+ # add to bashrc for interactive shells
+ grep -qxF 'export PATH="$HOME/.rbenv/bin:$PATH"' ~/.bashrc 2>/dev/null || \
+   printf '\nexport PATH="$HOME/.rbenv/bin:$PATH"\n' >> ~/.bashrc
+ grep -qxF 'eval "$(rbenv init -)"' ~/.bashrc 2>/dev/null || \
+   printf 'eval "$(rbenv init -)"\n' >> ~/.bashrc
+fi
+if [ ! -d "$RUBY_BUILD_DIR" ]; then
+ echo "[msf_setup] installing ruby-build..."
+ mkdir -p "$RBENV_PLUGINS_DIR"
+ git clone https://github.com/rbenv/ruby-build.git "$RUBY_BUILD_DIR"
+fi
+# Make rbenv available in this non-interactive shell
+export PATH="$RBENV_DIR/bin:$PATH"
+eval "$(rbenv init - || true)"
+# ---- Choose Ruby version ----
+REQUIRED="$(cat "$RUBY_VERSION_FILE" 2>/dev/null || echo "$DEFAULT_RUBY")"
+echo "[msf_setup] REQUIRED ruby = $REQUIRED"
+# If builders are RAM-constrained, uncomment:
+# export MAKEFLAGS="-j1"
+# ---- Install Ruby (idempotent), bundler, and gems ----
+rbenv install -s "$REQUIRED"
+rbenv rehash
+rbenv global "$REQUIRED"
+rbenv rehash
+ruby -v
+gem install bundler --no-document
+cd /opt/metasploit-framework
+rbenv local "$REQUIRED"
+rbenv rehash
+bundle config set path vendor/bundle
+bundle install --gemfile /opt/metasploit-framework/Gemfile -j2 --retry 3
+# sanity
+bundle exec ./msfconsole --version || true
+echo "[msf_setup] finished"
+SCRIPT
+RUN chmod +x /tmp/msf_rbenv_and_bundle.sh && chown msf:msf /tmp/msf_rbenv_and_bundle.sh
+USER msf
+WORKDIR /home/msf
+# convert CRLF->LF just in case, then run
+RUN sed -i 's/\r$//' /tmp/msf_rbenv_and_bundle.sh && /tmp/msf_rbenv_and_bundle.sh
+USER root
+WORKDIR /
+
+
+# Clean apt caches (help shrink final image)
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Keep container behaviour same as your base: sleep infinity for interactive testing
+CMD ["bash","-lc","sleep infinity"]
