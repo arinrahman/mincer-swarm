@@ -21,11 +21,9 @@ services:
    configs:
      - source: ldms_sampler_conf_v7
        target: /etc/ldms/ldmsd.conf
-     - source: pcap_capture_sh_v2           # NEW
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
+     
    volumes:
-    - pcap_data:/pcap                      # NEW
+     - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
    
 
  server2:
@@ -37,11 +35,8 @@ services:
    configs:
      - source: ldms_sampler_conf_v7
        target: /etc/ldms/ldmsd.conf
-     - source: pcap_capture_sh_v2           # NEW
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
    volumes:
-    - pcap_data:/pcap                      # NEW
+     - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
  client1:
    image: rahmanarin29/mincer:latest
    environment: [LDMS_NODE=client1]
@@ -51,11 +46,9 @@ services:
    configs:
      - source: ldms_sampler_conf_v7
        target: /etc/ldms/ldmsd.conf
-     - source: pcap_capture_sh_v2           # NEW
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
+     
    volumes:
-    - pcap_data:/pcap                      # NEW
+     - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
  client2:
    image: rahmanarin29/mincer:latest
    environment: [LDMS_NODE=client2]
@@ -65,11 +58,9 @@ services:
    configs:
      - source: ldms_sampler_conf_v7
        target: /etc/ldms/ldmsd.conf
-     - source: pcap_capture_sh_v2           # NEW
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
+     
    volumes:
-    - pcap_data:/pcap                      # NEW
+     - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
  client3:
    image: rahmanarin29/mincer:latest
    environment: [LDMS_NODE=client3]
@@ -79,11 +70,9 @@ services:
    configs:
      - source: ldms_sampler_conf_v7
        target: /etc/ldms/ldmsd.conf
-     - source: pcap_capture_sh_v2           # NEW
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
+     
    volumes:
-    - pcap_data:/pcap                      # NEW
+     - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
  client4:
    image: rahmanarin29/mincer:latest
    environment: [LDMS_NODE=client4]
@@ -93,11 +82,9 @@ services:
    configs:
      - source: ldms_sampler_conf_v7
        target: /etc/ldms/ldmsd.conf
-     - source: pcap_capture_sh_v2           # NEW
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
+     
    volumes:
-    - pcap_data:/pcap                      # NEW
+     - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
  server3:
    image: rahmanarin29/mincer:latest
    environment: [LDMS_NODE=server3]
@@ -107,11 +94,9 @@ services:
    configs:
      - source: ldms_sampler_conf_v7
        target: /etc/ldms/ldmsd.conf
-     - source: pcap_capture_sh_v2           # NEW
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
+     
    volumes:
-    - pcap_data:/pcap                      # NEW
+     - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
  client5:
    image: rahmanarin29/mincer:latest
    environment: [LDMS_NODE=client5]
@@ -121,11 +106,9 @@ services:
    configs:
      - source: ldms_sampler_conf_v7
        target: /etc/ldms/ldmsd.conf
-     - source: pcap_capture_sh_v2           # NEW
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
+     
    volumes:
-    - pcap_data:/pcap                      # NEW
+         - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
  client6:
    image: rahmanarin29/mincer:latest
    environment: [LDMS_NODE=client6]
@@ -135,11 +118,9 @@ services:
    configs:
      - source: ldms_sampler_conf_v7
        target: /etc/ldms/ldmsd.conf
-     - source: pcap_capture_sh_v2           # NEW
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
+     
    volumes:
-    - pcap_data:/pcap                      # NEW
+     - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
  aggregator:
    image: rahmanarin29/mincer:latest
    environment:
@@ -156,12 +137,10 @@ services:
      - source: collect_py_v7
        target: /opt/collector/collect.py
        mode: 0444
-     - source: pcap_capture_sh_v2
-       target: /usr/local/bin/capture_pcap.sh
-       mode: 0555
+     
    volumes:
      - agg_data:/data
-     - pcap_data:/pcap
+     - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw
 networks:
  netA:
    driver: overlay
