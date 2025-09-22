@@ -1,10 +1,10 @@
 ﻿version: "3.9"
 configs:
- ldms_sampler_conf_v7:
+ ldms_sampler_conf_v10:
    file: ./ldmsd.conf
- ldms_agg_conf_v7:
+ ldms_agg_conf_v10:
    file: ./ldmsd_agg.conf
- collect_py_v7:
+ collect_py_v10:
    file: ./collect.py
  pcap_capture_sh_v2:                # NEW
    file: ./capture_pcap.sh
@@ -19,7 +19,7 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netA]
    configs:
-     - source: ldms_sampler_conf_v7
+     - source: ldms_sampler_conf_v10
        target: /etc/ldms/ldmsd.conf
      
    volumes:
@@ -33,7 +33,7 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netA]
    configs:
-     - source: ldms_sampler_conf_v7
+     - source: ldms_sampler_conf_v10
        target: /etc/ldms/ldmsd.conf
    volumes:
      - ./capture_pcap.sh:/usr/local/bin/capture_pcap.sh:rw                     # NEW
@@ -44,7 +44,7 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netA]
    configs:
-     - source: ldms_sampler_conf_v7
+     - source: ldms_sampler_conf_v10
        target: /etc/ldms/ldmsd.conf
      
    volumes:
@@ -56,7 +56,7 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netA]
    configs:
-     - source: ldms_sampler_conf_v7
+     - source: ldms_sampler_conf_v10
        target: /etc/ldms/ldmsd.conf
      
    volumes:
@@ -68,7 +68,7 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netA]
    configs:
-     - source: ldms_sampler_conf_v7
+     - source: ldms_sampler_conf_v10
        target: /etc/ldms/ldmsd.conf
      
    volumes:
@@ -80,7 +80,7 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netA]
    configs:
-     - source: ldms_sampler_conf_v7
+     - source: ldms_sampler_conf_v10
        target: /etc/ldms/ldmsd.conf
      
    volumes:
@@ -92,7 +92,7 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netB]
    configs:
-     - source: ldms_sampler_conf_v7
+     - source: ldms_sampler_conf_v10
        target: /etc/ldms/ldmsd.conf
      
    volumes:
@@ -104,7 +104,7 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netB]
    configs:
-     - source: ldms_sampler_conf_v7
+     - source: ldms_sampler_conf_v10
        target: /etc/ldms/ldmsd.conf
      
    volumes:
@@ -116,7 +116,7 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netB]
    configs:
-     - source: ldms_sampler_conf_v7
+     - source: ldms_sampler_conf_v10
        target: /etc/ldms/ldmsd.conf
      
    volumes:
@@ -132,9 +132,9 @@ services:
    cap_add: ["NET_ADMIN"]
    networks: [netAgg, netA, netB]
    configs:
-     - source: ldms_agg_conf_v7
+     - source: ldms_agg_conf_v10
        target: /etc/ldms/ldmsd_agg.conf
-     - source: collect_py_v7
+     - source: collect_py_v10
        target: /opt/collector/collect.py
        mode: 0444
      
