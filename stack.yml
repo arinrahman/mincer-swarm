@@ -1,55 +1,113 @@
 ﻿version: "3.9"
+configs:
+ ldms_sampler_conf_v7:
+   file: ./ldmsd.conf
+ ldms_agg_conf_v7:
+   file: ./ldmsd_agg.conf
+ collect_py_v7:
+   file: ./collect.py
+volumes:
+ agg_data: {}
 services:
  server1:
    image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   environment: [LDMS_NODE=server1]
+   command: ["bash","-lc","tr -d '\\r' < /etc/ldms/ldmsd.conf > /tmp/ldmsd.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd.conf & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netA]
+   configs:
+     - source: ldms_sampler_conf_v7
+       target: /etc/ldms/ldmsd.conf
  server2:
-   image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   image: rahmanarin29/mincer-server2
+   environment: [LDMS_NODE=server2]
+   command: ["bash","-lc","tr -d '\\r' < /etc/ldms/ldmsd.conf > /tmp/ldmsd.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd.conf & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netA]
+   configs:
+     - source: ldms_sampler_conf_v7
+       target: /etc/ldms/ldmsd.conf
  client1:
    image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   environment: [LDMS_NODE=client1]
+   command: ["bash","-lc","tr -d '\\r' < /etc/ldms/ldmsd.conf > /tmp/ldmsd.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd.conf & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netA]
+   configs:
+     - source: ldms_sampler_conf_v7
+       target: /etc/ldms/ldmsd.conf
  client2:
    image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   environment: [LDMS_NODE=client2]
+   command: ["bash","-lc","tr -d '\\r' < /etc/ldms/ldmsd.conf > /tmp/ldmsd.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd.conf & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netA]
+   configs:
+     - source: ldms_sampler_conf_v7
+       target: /etc/ldms/ldmsd.conf
  client3:
    image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   environment: [LDMS_NODE=client3]
+   command: ["bash","-lc","tr -d '\\r' < /etc/ldms/ldmsd.conf > /tmp/ldmsd.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd.conf & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netA]
+   configs:
+     - source: ldms_sampler_conf_v7
+       target: /etc/ldms/ldmsd.conf
  client4:
    image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   environment: [LDMS_NODE=client4]
+   command: ["bash","-lc","tr -d '\\r' < /etc/ldms/ldmsd.conf > /tmp/ldmsd.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd.conf & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netA]
+   configs:
+     - source: ldms_sampler_conf_v7
+       target: /etc/ldms/ldmsd.conf
  server3:
    image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   environment: [LDMS_NODE=server3]
+   command: ["bash","-lc","tr -d '\\r' < /etc/ldms/ldmsd.conf > /tmp/ldmsd.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd.conf & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netB]
+   configs:
+     - source: ldms_sampler_conf_v7
+       target: /etc/ldms/ldmsd.conf
  client5:
    image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   environment: [LDMS_NODE=client5]
+   command: ["bash","-lc","tr -d '\\r' < /etc/ldms/ldmsd.conf > /tmp/ldmsd.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd.conf & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netB]
+   configs:
+     - source: ldms_sampler_conf_v7
+       target: /etc/ldms/ldmsd.conf
  client6:
    image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   environment: [LDMS_NODE=client6]
+   command: ["bash","-lc","tr -d '\\r' < /etc/ldms/ldmsd.conf > /tmp/ldmsd.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd.conf & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netB]
+   configs:
+     - source: ldms_sampler_conf_v7
+       target: /etc/ldms/ldmsd.conf
  aggregator:
    image: rahmanarin29/mincer:latest
-   command: ["bash","-lc","sleep infinity"]
+   environment:
+     - TERM=xterm
+     - PYTHONUNBUFFERED=1
+     - LDMSD_MEM_SZ=128M
+   # Start ldmsd and keep the container alive (no auto-running collect.py)
+   command: ["bash","-lc","mkdir -p /data && tr -d '\\r' < /etc/ldms/ldmsd_agg.conf > /tmp/ldmsd_agg.conf && printf '\\n' >> /tmp/ldmsd_agg.conf && /opt/ovis/sbin/ldmsd -c /tmp/ldmsd_agg.conf -v INFO & sleep infinity"]
    cap_add: ["NET_ADMIN"]
    networks: [netAgg, netA, netB]
+   configs:
+     - source: ldms_agg_conf_v7
+       target: /etc/ldms/ldmsd_agg.conf
+     - source: collect_py_v7
+       target: /opt/collector/collect.py
+       mode: 0444
+   volumes:
+     - agg_data:/data
 networks:
  netA:
    driver: overlay
@@ -69,4 +127,3 @@ networks:
    ipam:
      config:
        - subnet: 10.82.0.0/24
- 
