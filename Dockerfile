@@ -4,6 +4,7 @@ RUN apt-get update && \
    DEBIAN_FRONTEND=noninteractive apt-get install -y \
      build-essential git pkg-config autoconf automake libtool \
      python3-dev python3-setuptools python3-pip \
+     tcpdump \
      wget ca-certificates && \
    rm -rf /var/lib/apt/lists/*
 # --- Build & install PAPI 7.1.0 ---
